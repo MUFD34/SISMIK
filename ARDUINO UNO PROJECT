@@ -1,0 +1,119 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <Servo.h>
+
+// Definisikan pin
+#define TRIG_PIN 9       // Pin untuk Trigger HC-SR04
+#define ECHO_PIN 10      // Pin untuk Echo HC-SR04
+#define LED_PIN 13       // Pin untuk LED
+#define BUZZER_PIN 8     // Pin untuk Buzzer
+#define SERVO_PIN 6      // Pin untuk Servo
+
+// Inisialisasi objek LCD dan Servo
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // Alamat LCD 0x27, 16 karakter, 2 baris
+Servo servoMotor;  // Inisialisasi objek Servo
+
+void setup() {
+  // Setup Serial Monitor untuk debugging
+  Serial.begin(9600);
+
+  // Inisialisasi LCD
+  lcd.begin(16, 2);
+  lcd.init();
+  lcd.backlight();   // Nyalakan lampu latar LCD
+
+  // Setup pin mode
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  // Inisialisasi Servo
+  servoMotor.attach(SERVO_PIN);
+  
+  // Tampilkan pesan pembuka di LCD
+  // Inisialisasi LCD
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(3, 0);
+  lcd.print("AUTOMATIC");
+  lcd.setCursor(5, 1);
+  lcd.print("GATE");
+  delay(2000);
+  lcd.clear();
+  lcd.setCursor(2, 0);
+  lcd.print("KELOMPOK A6");
+  delay(2000);
+  
+  lcd.setCursor(2, 1);
+  lcd.print("M.TAQI MUFID");
+  delay(2000);
+  
+  lcd.setCursor(1, 1);
+  lcd.print("BERTA   NAULI");
+  delay(2000);
+ 
+  lcd.setCursor(1, 1);
+  lcd.print("RISKI ISNAWATI");
+  delay(2000);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Monitoring Jarak");
+  lcd.setCursor(8, 1);
+  lcd.print("1");
+  delay(2000);  // Tampilkan selama 2 detik
+  lcd.setCursor(8, 1);
+  lcd.print("2");
+  delay(2000);  // Tampilkan selama 2 detik
+  lcd.setCursor(8, 1);
+  lcd.print("3");
+  delay(2000);  // Tampilkan selama 2 detik
+  lcd.setCursor(8, 1);
+  lcd.print("4");
+  delay(2000);  // Tampilkan selama 2 detik
+  lcd.setCursor(8, 1);
+  lcd.print("5");
+  delay(2000);  // Tampilkan selama 2 detik
+  lcd.setCursor(8, 1);
+  lcd.print("!");
+  delay(2000);  // Tampilkan selama 2 detik
+}
+
+void loop() {
+  // Mengirim trigger pulse ke sensor HC-SR04
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Menghitung waktu untuk mendapatkan jarak
+  long duration = pulseIn(ECHO_PIN, HIGH);
+  long jarak = (duration / 2) / 29.1;  // Menghitung jarak dalam cm
+
+  // Tampilkan data jarak ke Serial Monitor
+  Serial.print("Jarak: ");
+  Serial.print(jarak);
+  Serial.println(" cm");
+
+  // Tampilkan data jarak ke LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Jarak: ");
+  lcd.print(jarak);
+  lcd.print(" cm");
+
+  // Jika jarak terlalu dekat (< 10 cm), hidupkan LED dan Buzzer, serta gerakkan servo
+  if (jarak < 50) {
+    digitalWrite(LED_PIN, HIGH);     // Nyalakan LED
+    tone(BUZZER_PIN, 1000);          // Bunyi Buzzer dengan frekuensi 1000 Hz
+    servoMotor.write(90);           // Gerakkan servo ke posisi 180 derajat
+  } else {
+    digitalWrite(LED_PIN, LOW);      // Matikan LED
+    noTone(BUZZER_PIN);              // Matikan Buzzer
+    servoMotor.write(0);             // Gerakkan servo ke posisi 0 derajat
+  }
+
+  // Tunggu 1 detik sebelum membaca ulang
+  delay(1000);  // Interval pembacaan sensor 1 detik
+}
